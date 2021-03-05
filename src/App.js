@@ -1,56 +1,64 @@
-import React from 'react';
-import logo from './logo.svg';
-import { Counter } from './features/counter/Counter';
-import './App.css';
+import React, { useState, useEffect } from "react";
+
+import "./App.css";
+import Header from "./components/Header";
+import MainBoard from "./components/MainBoard";
+import unblash from "./api/unplash";
 
 function App() {
+  const [pins, setPins] = useState([]);
+
+  const getImages = (term) => {
+    return unblash.get("search/photos", {
+      params: {
+        query: term,
+      },
+    });
+  };
+  const onSearchSubmit = (term) => {
+    console.log(`this is value search ${term}`);
+    getImages(term).then((res) => {
+      let results = res.data.results;
+      let newPins = [...results, ...pins];
+
+      newPins.sort(function (a, b) {
+        return 0.5 - Math.random();
+      });
+      setPins(newPins);
+    });
+  };
+
+  const getNewPins = () => {
+    let promises = [];
+    let pinData = [];
+
+    let pins = ["tokyo", "dogs", "cats", "Bali", "cars"];
+
+    pins.forEach((pinTerm) => {
+      promises.push(
+        getImages(pinTerm).then((res) => {
+          let results = res.data.results;
+
+          pinData = pinData.concat(results);
+          pinData.sort(function (a, b) {
+            return 0.55 - Math.random();
+          });
+        })
+      );
+      Promise.all(promises).then(() => {
+        setPins(pinData);
+      });
+    });
+  };
+
+  useEffect(() => {
+    getNewPins();
+  }, []);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <Counter />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <span>
-          <span>Learn </span>
-          <a
-            className="App-link"
-            href="https://reactjs.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux-toolkit.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux Toolkit
-          </a>
-          ,<span> and </span>
-          <a
-            className="App-link"
-            href="https://react-redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React Redux
-          </a>
-        </span>
-      </header>
+      <Header onSubmit={onSearchSubmit} />
+      <MainBoard pins={pins} />
     </div>
   );
 }
